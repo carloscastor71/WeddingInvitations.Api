@@ -43,7 +43,7 @@ namespace WeddingInvitations.Api.Controllers
         [HttpPost]
         public async Task<ActionResult<Family>> CreateFamily(Family family)
         {
-            family.InvitationCode = Guid.NewGuid();
+            family.InvitationCode = Family.GenerateInvitationCode();
             family.CreatedAt = DateTime.UtcNow;
             family.UpdatedAt = DateTime.UtcNow;
 
