@@ -52,6 +52,24 @@ namespace WeddingInvitations.Api.Controllers
 
             return CreatedAtAction(nameof(GetFamily), new { id = family.Id }, family);
         }
+        // PUT: api/families/5/mark-sent
+        [HttpPut("{id}/mark-sent")]
+        public async Task<IActionResult> MarkAsSent(int id)
+        {
+            var family = await _context.Families.FindAsync(id);
+            if (family == null)
+            {
+                return NotFound();
+            }
+
+            family.InvitationSent = true;
+            family.SentDate = DateTime.UtcNow;
+            family.Status = "pending";
+            family.UpdatedAt = DateTime.UtcNow;
+
+            await _context.SaveChangesAsync();
+            return Ok(family);
+        }
 
         // PUT: api/families/5
         [HttpPut("{id}")]

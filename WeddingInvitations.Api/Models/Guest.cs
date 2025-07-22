@@ -17,6 +17,10 @@ namespace WeddingInvitations.Api.Models
 
         [StringLength(20)]
         public string Age { get; set; } = "adult"; // adult, child, baby
+       
+        public bool IsChild { get; set; } = false; // Flag específico para niños
+        [StringLength(500)]
+        public string? Notes { get; set; } // Notas específicas por persona
 
         [StringLength(500)]
         public string? DietaryRestrictions { get; set; }
