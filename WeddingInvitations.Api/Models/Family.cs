@@ -16,13 +16,13 @@ namespace WeddingInvitations.Api.Models
         [StringLength(200)]
         public string ContactPerson { get; set; } = string.Empty;
 
-        [Required]
         [EmailAddress]
         [StringLength(200)]
-        public string Email { get; set; } = string.Empty;
+        public string? Email { get; set; }
 
+        [Required]
         [StringLength(50)]
-        public string? Phone { get; set; }
+        public string Phone { get; set; }
 
         [Required]
         public int MaxGuests { get; set; } = 2;
