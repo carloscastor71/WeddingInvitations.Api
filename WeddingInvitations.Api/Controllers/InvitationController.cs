@@ -112,11 +112,105 @@ namespace WeddingInvitations.Api.Controllers
             await _context.SaveChangesAsync();
             return Ok(new { message = "Respuesta guardada exitosamente" });
         }
-    }
 
-    // Clase para el request de respuesta
-    public class RespondRequest
-    {
-        public bool Attending { get; set; }
+        // AGREGAR este método al InvitationController.cs existente (después del método RespondToInvitation)
+
+        // POST: api/invitation/{code}/complete-form - Completar formulario de invitados
+        [HttpPost("{code}/complete-form")]
+        public async Task<ActionResult> CompleteGuestForm(string code, [FromBody] CompleteFormRequest request)
+        {
+            var family = await _context.Families
+                .Include(f => f.Guests)
+                .FirstOrDefaultAsync(f => f.InvitationCode == code);
+
+            if (family == null)
+            {
+                return NotFound(new { message = "Invitación no encontrada" });
+            }
+
+            if (!family.Attending.HasValue || !family.Attending.Value)
+            {
+                return BadRequest(new { message = "Debe confirmar asistencia primero" });
+            }
+
+            if (family.FormCompleted)
+            {
+                return BadRequest(new { message = "El formulario ya fue completado" });
+            }
+
+            // Validar número de invitados
+            if (request.Guests.Count > family.MaxGuests)
+            {
+                return BadRequest(new { message = $"Excede el límite de {family.MaxGuests} invitados" });
+            }
+
+            if (request.Guests.Count == 0)
+            {
+                return BadRequest(new { message = "Debe registrar al menos un invitado" });
+            }
+
+            // Limpiar invitados existentes
+            _context.Guests.RemoveRange(family.Guests);
+
+            // Agregar nuevos invitados
+            foreach (var guestData in request.Guests)
+            {
+                var guest = new Guest
+                {
+                    FamilyId = family.Id,
+                    Name = guestData.Name.Trim(),
+                    Age = guestData.IsChild ? "child" : "adult",
+                    IsChild = guestData.IsChild,
+                    DietaryRestrictions = string.IsNullOrWhiteSpace(guestData.DietaryRestrictions)
+                        ? null : guestData.DietaryRestrictions.Trim(),
+                    Notes = string.IsNullOrWhiteSpace(guestData.Notes)
+                        ? null : guestData.Notes.Trim(),
+                    CreatedAt = DateTime.UtcNow
+                };
+
+                _context.Guests.Add(guest);
+            }
+
+            // Actualizar familia
+            family.FormCompleted = true;
+            family.FormCompletedDate = DateTime.UtcNow;
+            family.ConfirmedGuests = request.Guests.Count;
+            family.Status = "confirmed";
+            family.UpdatedAt = DateTime.UtcNow;
+
+            // Mensaje especial de la familia (opcional)
+            if (!string.IsNullOrWhiteSpace(request.FamilyMessage))
+            {
+                family.SpecialMessage = request.FamilyMessage.Trim();
+            }
+
+            await _context.SaveChangesAsync();
+
+            return Ok(new
+            {
+                message = "Formulario completado exitosamente",
+                confirmedGuests = family.ConfirmedGuests
+            });
+        }
+
+        // AGREGAR estas clases al final del archivo (después de RespondRequest)
+        public class CompleteFormRequest
+        {
+            public List<GuestRequest> Guests { get; set; } = new List<GuestRequest>();
+            public string? FamilyMessage { get; set; }
+        }
+
+        public class GuestRequest
+        {
+            public string Name { get; set; } = string.Empty;
+            public bool IsChild { get; set; } = false;
+            public string? DietaryRestrictions { get; set; }
+            public string? Notes { get; set; }
+        }
+        // Clase para el request de respuesta
+        public class RespondRequest
+        {
+            public bool Attending { get; set; }
+        }
     }
 }

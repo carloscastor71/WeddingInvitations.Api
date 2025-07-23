@@ -1,5 +1,6 @@
 ﻿using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
+using System.Text.Json.Serialization;
 
 namespace WeddingInvitations.Api.Models
 {
@@ -29,6 +30,8 @@ namespace WeddingInvitations.Api.Models
 
         // Navegación hacia la familia
         [ForeignKey("FamilyId")]
+        [JsonIgnore] // <-- ESTA LÍNEA SOLUCIONA EL PROBLEMA
+
         public Family Family { get; set; } = null!;
     }
 }
