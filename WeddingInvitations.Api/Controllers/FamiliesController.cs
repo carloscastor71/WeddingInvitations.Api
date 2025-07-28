@@ -2,6 +2,7 @@
 using Microsoft.EntityFrameworkCore;
 using WeddingInvitations.Api.Data;
 using WeddingInvitations.Api.Models;
+using WeddingInvitations.Api.Services;
 
 namespace WeddingInvitations.Api.Controllers
 {
@@ -103,16 +104,60 @@ namespace WeddingInvitations.Api.Controllers
         [HttpDelete("{id}")]
         public async Task<IActionResult> DeleteFamily(int id)
         {
-            var family = await _context.Families.FindAsync(id);
+            var family = await _context.Families
+                .Include(f => f.Guests)
+                .FirstOrDefaultAsync(f => f.Id == id);
+
             if (family == null)
             {
-                return NotFound();
+                return NotFound(new { message = "Familia no encontrada" });
             }
 
-            _context.Families.Remove(family);
-            await _context.SaveChangesAsync();
+            var guestCount = family.Guests.Count;
+            var familyName = family.FamilyName;
 
-            return NoContent();
+            try
+            {
+                _context.Families.Remove(family);
+                await _context.SaveChangesAsync();
+
+                // ✅ IMPORTANTE: Siempre devolver JSON válido
+                return Ok(new
+                {
+                    message = $"Familia '{familyName}' eliminada exitosamente",
+                    deletedGuests = guestCount,
+                    success = true
+                });
+            }
+            catch (Exception ex)
+            {
+                // ✅ También en error, devolver JSON válido
+                return StatusCode(500, new
+                {
+                    message = "Error al eliminar la familia",
+                    error = ex.Message,
+                    success = false
+                });
+            }
+        }
+        // GET: api/families/export-excel
+        [HttpGet("export-excel")]
+        public async Task<IActionResult> ExportGuestsToExcel([FromServices] ExcelExportService excelService)
+        {
+            try
+            {
+                var excelData = await excelService.ExportGuestsToExcel();
+                var fileName = $"Invitados_Boda_Karen_Carlos_{DateTime.Now:yyyyMMdd_HHmm}.xlsx";
+
+                return File(excelData,
+                    "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+                    fileName);
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"❌ Error generating Excel: {ex.Message}");
+                return BadRequest(new { message = "Error al generar Excel", error = ex.Message });
+            }
         }
 
         private bool FamilyExists(int id)

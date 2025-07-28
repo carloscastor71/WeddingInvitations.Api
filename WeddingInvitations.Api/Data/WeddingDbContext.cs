@@ -29,9 +29,6 @@ namespace WeddingInvitations.Api.Data
                 .HasIndex(f => f.InvitationCode)
                 .IsUnique();
 
-            modelBuilder.Entity<Family>()
-                .HasIndex(f => f.Email)
-                .IsUnique();
         }
     }
 }
