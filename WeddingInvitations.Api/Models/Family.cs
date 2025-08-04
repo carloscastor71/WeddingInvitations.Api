@@ -75,7 +75,7 @@ namespace WeddingInvitations.Api.Models
         // Recordatorios
         public DateTime? LastReminderSent { get; set; }
         public int ReminderCount { get; set; } = 0;
-        public DateTime ResponseDeadline { get; set; } = DateTime.SpecifyKind(new DateTime(2025, 11, 20), DateTimeKind.Utc);
+        public DateTime ResponseDeadline { get; set; } = DateTime.SpecifyKind(new DateTime(2025, 10, 20), DateTimeKind.Utc);
 
 
         // Método para generar código único
