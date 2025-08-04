@@ -12,6 +12,12 @@ namespace WeddingInvitations.Api.Models
         [StringLength(200)]
         public string FamilyName { get; set; } = string.Empty;
 
+        [StringLength(200)]
+        public string? CorrectedFamilyName { get; set; }
+
+        [StringLength(10)]
+        public string Country { get; set; } = "MX";
+
         [Required]
         [StringLength(200)]
         public string ContactPerson { get; set; } = string.Empty;

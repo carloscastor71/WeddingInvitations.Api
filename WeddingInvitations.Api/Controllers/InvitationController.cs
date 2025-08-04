@@ -48,6 +48,7 @@ namespace WeddingInvitations.Api.Controllers
                 formCompleted = family.FormCompleted,
                 responseDeadline = family.ResponseDeadline,
                 guests = family.Guests,
+                correctedFamilyName = family.CorrectedFamilyName,
 
                 // Información de eventos
                 events = new[]
@@ -149,6 +150,10 @@ namespace WeddingInvitations.Api.Controllers
                 return BadRequest(new { message = "Debe registrar al menos un invitado" });
             }
 
+            if (!string.IsNullOrWhiteSpace(request.CorrectedFamilyName))
+            {
+                family.CorrectedFamilyName = request.CorrectedFamilyName.Trim();
+            }
             // Limpiar invitados existentes
             _context.Guests.RemoveRange(family.Guests);
 
@@ -189,7 +194,8 @@ namespace WeddingInvitations.Api.Controllers
             return Ok(new
             {
                 message = "Formulario completado exitosamente",
-                confirmedGuests = family.ConfirmedGuests
+                confirmedGuests = family.ConfirmedGuests,
+                correctedFamilyName = family.CorrectedFamilyName
             });
         }
 
@@ -198,6 +204,7 @@ namespace WeddingInvitations.Api.Controllers
         {
             public List<GuestRequest> Guests { get; set; } = new List<GuestRequest>();
             public string? FamilyMessage { get; set; }
+            public string? CorrectedFamilyName { get; set; }
         }
 
         public class GuestRequest

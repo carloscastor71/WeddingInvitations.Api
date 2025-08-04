@@ -44,6 +44,19 @@ namespace WeddingInvitations.Api.Controllers
         [HttpPost]
         public async Task<ActionResult<Family>> CreateFamily(Family family)
         {
+            //  Validaciones básicas
+            if (string.IsNullOrWhiteSpace(family.FamilyName) ||
+                string.IsNullOrWhiteSpace(family.ContactPerson) ||
+                string.IsNullOrWhiteSpace(family.Phone))
+            {
+                return BadRequest(new { message = "Datos obligatorios faltantes" });
+            }
+
+            //  País por defecto si no viene
+            if (string.IsNullOrWhiteSpace(family.Country))
+            {
+                family.Country = "MX";
+            }
             family.InvitationCode = Family.GenerateInvitationCode();
             family.CreatedAt = DateTime.UtcNow;
             family.UpdatedAt = DateTime.UtcNow;
