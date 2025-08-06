@@ -59,7 +59,7 @@ namespace WeddingInvitations.Api.Services
             {
                 foreach (var guest in family.Guests)
                 {
-                    worksheet.Cells[row, 1].Value = family.CorrectedFamilyName;
+                    worksheet.Cells[row, 1].Value = string.IsNullOrWhiteSpace(family.CorrectedFamilyName) ? family.FamilyName : family.CorrectedFamilyName;
                     worksheet.Cells[row, 2].Value = family.ContactPerson;
                     worksheet.Cells[row, 3].Value = family.Phone;
                     worksheet.Cells[row, 4].Value = family.Email ?? "";
