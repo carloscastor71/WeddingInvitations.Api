@@ -172,6 +172,69 @@ namespace WeddingInvitations.Api.Controllers
                 return BadRequest(new { message = "Error al generar Excel", error = ex.Message });
             }
         }
+        // GET: api/families/guests-for-assignment
+        // Obtiene todos los invitados confirmados para asignación de mesas
+        [HttpGet("guests-for-assignment")]
+        public async Task<IActionResult> GetGuestsForAssignment(
+            [FromQuery] int page = 1,
+            [FromQuery] int pageSize = 20,
+            [FromQuery] string? filter = null)
+        {
+            var query = _context.Guests
+                .Include(g => g.Family)
+                .Include(g => g.Table)
+                .Where(g => g.Family.Status == "confirmed");
+
+            // Aplicar filtro si existe
+            if (!string.IsNullOrEmpty(filter))
+            {
+                filter = filter.ToLower();
+                if (filter == "unassigned")
+                {
+                    query = query.Where(g => g.TableId == null);
+                }
+                else if (filter == "assigned")
+                {
+                    query = query.Where(g => g.TableId != null);
+                }
+            }
+
+            // Contar total antes de paginar
+            var totalGuests = await query.CountAsync();
+
+            // Ordenar: primero sin mesa, luego por familia y nombre
+            var guests = await query
+                .OrderBy(g => g.TableId.HasValue ? 1 : 0)
+                .ThenBy(g => g.Family.FamilyName)
+                .ThenBy(g => g.Name)
+                .Skip((page - 1) * pageSize)
+                .Take(pageSize)
+                .Select(g => new
+                {
+                    g.Id,
+                    g.Name,
+                    g.IsChild,
+                    g.Notes,
+                    FamilyId = g.Family.Id,
+                    FamilyName = g.Family.CorrectedFamilyName ?? g.Family.FamilyName,
+                    TableId = g.TableId,
+                    TableName = g.Table != null ? g.Table.TableName : null,
+                    Country = g.Family.Country
+                })
+                .ToListAsync();
+
+            return Ok(new
+            {
+                Data = guests,
+                Pagination = new
+                {
+                    CurrentPage = page,
+                    PageSize = pageSize,
+                    TotalItems = totalGuests,
+                    TotalPages = (int)Math.Ceiling(totalGuests / (double)pageSize)
+                }
+            });
+        }
 
         private bool FamilyExists(int id)
         {

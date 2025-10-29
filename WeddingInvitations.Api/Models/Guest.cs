@@ -23,6 +23,9 @@ namespace WeddingInvitations.Api.Models
         [StringLength(500)]
         public string? Notes { get; set; } // Notas específicas por persona
 
+        public int? TableId { get; set; } // Nullable - invitados pueden no tener mesa asignada
+        public Table? Table { get; set; } // Navegación
+
         [StringLength(500)]
         public string? DietaryRestrictions { get; set; }
 

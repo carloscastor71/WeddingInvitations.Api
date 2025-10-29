@@ -12,6 +12,8 @@ namespace WeddingInvitations.Api.Data
         // DbSets (tablas)
         public DbSet<Family> Families { get; set; }
         public DbSet<Guest> Guests { get; set; }
+        public DbSet<Table> Tables { get; set; } // <-- AGREGAR ESTA LÍNEA
+
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
@@ -24,10 +26,21 @@ namespace WeddingInvitations.Api.Data
                 .HasForeignKey(g => g.FamilyId)
                 .OnDelete(DeleteBehavior.Cascade);
 
+            // Configurar relación uno-a-muchos entre Table y Guest  <-- AGREGAR DESDE AQUÍ
+            modelBuilder.Entity<Guest>()
+                .HasOne(g => g.Table)
+                .WithMany(t => t.Guests)
+                .HasForeignKey(g => g.TableId)
+                .OnDelete(DeleteBehavior.SetNull); // Si se elimina mesa, invitados quedan sin asignar
+
+
             // Configurar índices únicos
             modelBuilder.Entity<Family>()
                 .HasIndex(f => f.InvitationCode)
                 .IsUnique();
+            // Índice para TableNumber para búsquedas rápidas
+            modelBuilder.Entity<Table>()
+                .HasIndex(t => t.TableNumber);  // <-- HASTA AQUÍ
 
         }
     }
