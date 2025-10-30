@@ -178,7 +178,8 @@ namespace WeddingInvitations.Api.Controllers
         public async Task<IActionResult> GetGuestsForAssignment(
             [FromQuery] int page = 1,
             [FromQuery] int pageSize = 20,
-            [FromQuery] string? filter = null)
+            [FromQuery] string? filter = null,
+[FromQuery] string? sortBy = "default")
         {
             var query = _context.Guests
                 .Include(g => g.Family)
@@ -197,18 +198,57 @@ namespace WeddingInvitations.Api.Controllers
                 {
                     query = query.Where(g => g.TableId != null);
                 }
+                else
+                {
+                    // Búsqueda por nombre o familia
+                    query = query.Where(g =>
+                        g.Name.ToLower().Contains(filter) ||
+                        g.Family.FamilyName.ToLower().Contains(filter));
+                }
             }
 
             // Contar total antes de paginar
             var totalGuests = await query.CountAsync();
 
-            // Ordenar: primero sin mesa, luego por familia y nombre
-            var guests = await query
-                .OrderBy(g => g.TableId.HasValue ? 1 : 0)
-                .ThenBy(g => g.Family.FamilyName)
-                .ThenBy(g => g.Name)
+            // Aplicar ordenamiento según el parámetro sortBy
+            IOrderedQueryable<Guest> orderedQuery;
+
+            switch (sortBy?.ToLower())
+            {
+                case "table":
+                    // Ordenar por mesa: asignados primero por número de mesa, sin asignar al final
+                    orderedQuery = query
+                        .OrderBy(g => g.TableId.HasValue ? 0 : 1)
+                        .ThenBy(g => g.Table != null ? g.Table.TableNumber : int.MaxValue)
+                        .ThenBy(g => g.Name);
+                    break;
+
+                case "family":
+                    // Ordenar por nombre de familia
+                    orderedQuery = query
+                        .OrderBy(g => g.Family.FamilyName)
+                        .ThenBy(g => g.Name);
+                    break;
+
+                case "name":
+                    // Ordenar por nombre de invitado
+                    orderedQuery = query.OrderBy(g => g.Name);
+                    break;
+
+                case "default":
+                default:
+                    // Orden por defecto: SIN mesa primero, luego CON mesa por número
+                    orderedQuery = query
+                        .OrderBy(g => g.TableId.HasValue ? 1 : 0)  // Sin mesa primero (0), con mesa después (1)
+                        .ThenBy(g => g.Table != null ? g.Table.TableNumber : 0)  // Luego por número de mesa
+                        .ThenBy(g => g.Name);  // Luego por nombre
+                    break;
+            }
+
+            // Paginar y proyectar
+            var guests = await orderedQuery
                 .Skip((page - 1) * pageSize)
-                .Take(pageSize)
+                            .Take(pageSize)
                 .Select(g => new
                 {
                     g.Id,
