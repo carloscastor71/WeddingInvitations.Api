@@ -16,13 +16,18 @@ namespace WeddingInvitations.Api.Services
 
         public async Task<byte[]> ExportGuestsToExcel()
         {
-            // Obtener familias confirmadas con sus invitados
-            var families = await _context.Families
-                .Include(f => f.Guests)
-                    .ThenInclude(g => g.Table) // 👈 trae la mesa asignada
-                .Where(f => f.Status == "confirmed" && f.FormCompleted)
-                .OrderBy(f => f.FamilyName)
+            // Obtener invitados confirmados ordenados por mesa
+            var guests = await _context.Guests
+                .Include(g => g.Family)
+                .Include(g => g.Table)
+                .Where(g => g.Family.Status == "confirmed" && g.Family.FormCompleted)
+                .OrderBy(g => g.TableId.HasValue ? 1 : 0)  // Sin mesa primero (0), con mesa después (1)
+                .ThenBy(g => g.Table != null ? g.Table.TableNumber : 0)  // Luego por número de mesa
+                .ThenBy(g => g.Name)  // Luego por nombre de invitado
                 .ToListAsync();
+
+            // Obtener familias únicas para el resumen
+            var families = guests.Select(g => g.Family).DistinctBy(f => f.Id).ToList();
 
 
             // Configurar EPPlus para uso no comercial
@@ -57,26 +62,25 @@ namespace WeddingInvitations.Api.Services
             int totalAdults = 0;
             int totalChildren = 0;
 
-            // Llenar datos de cada invitado
-            foreach (var family in families)
+            // Llenar datos de cada invitado (ya vienen ordenados por mesa)
+            foreach (var guest in guests)
             {
-                foreach (var guest in family.Guests)
-                {
-                    worksheet.Cells[row, 1].Value = string.IsNullOrWhiteSpace(family.CorrectedFamilyName) ? family.FamilyName : family.CorrectedFamilyName;
-                    worksheet.Cells[row, 2].Value = family.ContactPerson;
-                    worksheet.Cells[row, 3].Value = family.Phone;
-                    worksheet.Cells[row, 4].Value = family.Email ?? "";
-                    worksheet.Cells[row, 5].Value = guest.Name;
-                    worksheet.Cells[row, 6].Value = guest.IsChild ? "Niño" : "Adulto";
-                    worksheet.Cells[row, 7].Value = guest.DietaryRestrictions ?? "";
-                    worksheet.Cells[row, 8].Value = guest.Notes ?? "";
-                    worksheet.Cells[row, 9].Value = family.FormCompletedDate?.ToString("dd/MM/yyyy HH:mm") ?? "";
-                    worksheet.Cells[row, 10].Value = guest.Table?.TableName ?? "Sin mesa";
+                var family = guest.Family;
 
-                    totalGuests++;
-                    if (guest.IsChild) totalChildren++; else totalAdults++;
-                    row++;
-                }
+                worksheet.Cells[row, 1].Value = string.IsNullOrWhiteSpace(family.CorrectedFamilyName) ? family.FamilyName : family.CorrectedFamilyName;
+                worksheet.Cells[row, 2].Value = family.ContactPerson;
+                worksheet.Cells[row, 3].Value = family.Phone;
+                worksheet.Cells[row, 4].Value = family.Email ?? "";
+                worksheet.Cells[row, 5].Value = guest.Name;
+                worksheet.Cells[row, 6].Value = guest.IsChild ? "Niño" : "Adulto";
+                worksheet.Cells[row, 7].Value = guest.DietaryRestrictions ?? "";
+                worksheet.Cells[row, 8].Value = guest.Notes ?? "";
+                worksheet.Cells[row, 9].Value = family.FormCompletedDate?.ToString("dd/MM/yyyy HH:mm") ?? "";
+                worksheet.Cells[row, 10].Value = guest.Table?.TableName ?? "Sin mesa";
+
+                totalGuests++;
+                if (guest.IsChild) totalChildren++; else totalAdults++;
+                row++;
             }
 
             // Agregar resumen al final
