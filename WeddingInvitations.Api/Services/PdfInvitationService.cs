@@ -134,51 +134,23 @@ namespace WeddingInvitations.Api.Services
             {
                 container.Page(page =>
                 {
-                    page.Size(PageSizes.Letter);
-                    page.Margin(40);
+                    // Lienzo continuo optimizado para móvil (ancho fijo, alto automático)
+                    page.ContinuousSize(400, Unit.Point);
+                    page.Margin(25);
                     page.PageColor(Colors.White);
 
-                    page.Content().Column(column =>
+                    // TODO centrado en un único flujo
+                    page.Content().AlignCenter().Column(column =>
                     {
-                        // Espaciado superior
-                        column.Item().Height(20);
+                        column.Spacing(18);
 
-                        // Header minimalista
                         column.Item().Element(c => ComposeHeader(c));
-
-                        column.Item().Height(20);
-
-                        // Título
                         column.Item().Element(c => ComposeTitle(c));
-
-                        column.Item().Height(25);
-
-                        // Info de familia
                         column.Item().Element(c => ComposeFamilyInfo(c, data));
-
-                        column.Item().Height(25);
-
-                        // Eventos
                         column.Item().Element(c => ComposeEvents(c));
-
-                        column.Item().Height(20);
-
-                        // Lista de invitados
                         column.Item().Element(c => ComposeGuestsList(c, data));
-
-                        column.Item().Height(20);
-
-                        // Código de vestimenta
                         column.Item().Element(c => ComposeDressCode(c));
-
-                        column.Item().Height(20);
-
-                        // Mensaje de regalos
                         column.Item().Element(c => ComposeGiftMessage(c));
-
-                        column.Item().Height(25);
-
-                        // Footer
                         column.Item().Element(c => ComposeFooter(c));
                     });
                 });
@@ -188,15 +160,14 @@ namespace WeddingInvitations.Api.Services
         }
 
         // ========================================
-        // SECCIONES DEL PDF - DISEÑO MINIMALISTA
+        // TODAS LAS SECCIONES CENTRADAS
         // ========================================
 
         private void ComposeHeader(IContainer container)
         {
             container.AlignCenter().Column(column =>
             {
-                // Línea decorativa superior
-                column.Item().Width(200).Height(2).Background(WeddingEventInfo.PrimaryColorHex);
+                column.Item().AlignCenter().Width(160).Height(3).Background(WeddingEventInfo.PrimaryColorHex);
             });
         }
 
@@ -204,21 +175,24 @@ namespace WeddingInvitations.Api.Services
         {
             container.AlignCenter().Column(column =>
             {
-                // Nombres grandes y elegantes
-                column.Item().Text(text =>
+                // Nombres - TODO centrado
+                column.Item().AlignCenter().Text(text =>
                 {
                     text.AlignCenter();
-                    text.Span($"{WeddingEventInfo.BrideName} ").FontSize(40).FontColor(WeddingEventInfo.PrimaryColorHex).Bold();
-                    text.Span("&").FontSize(32).FontColor(WeddingEventInfo.SecondaryColorHex).Light();
-                    text.Span($" {WeddingEventInfo.GroomName}").FontSize(40).FontColor(WeddingEventInfo.PrimaryColorHex).Bold();
+                    text.Span($"{WeddingEventInfo.BrideName} ").FontSize(38).FontColor(WeddingEventInfo.PrimaryColorHex).Bold();
+                    text.Span("& ").FontSize(30).FontColor(WeddingEventInfo.SecondaryColorHex);
+                    text.Span($"{WeddingEventInfo.GroomName}").FontSize(38).FontColor(WeddingEventInfo.PrimaryColorHex).Bold();
                 });
 
-                column.Item().PaddingTop(8).Width(150).Height(1).Background(WeddingEventInfo.SecondaryColorHex);
+                // Separador
+                column.Item().AlignCenter().PaddingTop(10).Width(130).Height(1).Background(WeddingEventInfo.SecondaryColorHex);
 
-                column.Item().PaddingTop(12).Text("NOS CASAMOS")
-                    .FontSize(16).FontColor(WeddingEventInfo.PrimaryColorHex).LetterSpacing(3).Light();
+                // NOS CASAMOS
+                column.Item().AlignCenter().PaddingTop(12).Text("NOS CASAMOS")
+                    .FontSize(15).FontColor(WeddingEventInfo.PrimaryColorHex);
 
-                column.Item().PaddingTop(6).Text(WeddingEventInfo.WeddingDate)
+                // Fecha
+                column.Item().AlignCenter().PaddingTop(6).Text(WeddingEventInfo.WeddingDate)
                     .FontSize(13).FontColor(WeddingEventInfo.SecondaryColorHex);
             });
         }
@@ -227,42 +201,42 @@ namespace WeddingInvitations.Api.Services
         {
             container.AlignCenter().Column(column =>
             {
-                // Título de sección
-                column.Item().Text("PASE DE INVITADO")
-                    .FontSize(12).FontColor(WeddingEventInfo.PrimaryColorHex).LetterSpacing(2).Light();
+                // Título
+                column.Item().AlignCenter().Text("PASE DE INVITADO")
+                    .FontSize(12).FontColor(WeddingEventInfo.PrimaryColorHex);
 
-                column.Item().PaddingTop(12).Width(300).Height(1).Background(Colors.Grey.Lighten2);
+                column.Item().AlignCenter().PaddingTop(10).Width(260).Height(1).Background(Colors.Grey.Lighten2);
 
-                // Nombre de familia destacado
-                column.Item().PaddingTop(12).Text(data.FamilyName)
-                    .FontSize(22).FontColor(Colors.Black).Bold();
+                // Nombre de familia
+                column.Item().AlignCenter().PaddingTop(12).Text(data.FamilyName)
+                    .FontSize(26).FontColor(Colors.Black).Bold();
 
-                // Info de mesa
+                // Mesa
                 if (data.TableNumber.HasValue)
                 {
-                    column.Item().PaddingTop(15).PaddingHorizontal(20).PaddingVertical(12)
-                        .Border(2).BorderColor(WeddingEventInfo.SecondaryColorHex)
-                        .Column(inner =>
+                    column.Item().AlignCenter().PaddingTop(15).PaddingHorizontal(30).PaddingVertical(15)
+                        .Border(3).BorderColor(WeddingEventInfo.SecondaryColorHex)
+                        .AlignCenter().Column(inner =>
                         {
-                            inner.Item().Text($"MESA {data.TableNumber}")
-                                .FontSize(20).FontColor(WeddingEventInfo.SecondaryColorHex).Bold();
+                            inner.Item().AlignCenter().Text($"MESA {data.TableNumber}")
+                                .FontSize(24).FontColor(WeddingEventInfo.SecondaryColorHex).Bold();
 
                             if (!string.IsNullOrEmpty(data.TableName))
                             {
-                                inner.Item().PaddingTop(3).Text(data.TableName)
-                                    .FontSize(11).FontColor(Colors.Grey.Darken1);
+                                inner.Item().AlignCenter().PaddingTop(5).Text(data.TableName)
+                                    .FontSize(13).FontColor(Colors.Grey.Darken1);
                             }
                         });
                 }
                 else
                 {
-                    column.Item().PaddingTop(15).Text("Mesa: Por asignar")
-                        .FontSize(11).FontColor(Colors.Grey.Darken1).Italic();
+                    column.Item().AlignCenter().PaddingTop(15).Text("Mesa: Por asignar")
+                        .FontSize(12).FontColor(Colors.Grey.Darken1).Italic();
                 }
 
-                // Código pequeño al final
-                column.Item().PaddingTop(15).Text($"Código: {data.InvitationCode}")
-                    .FontSize(9).FontColor(Colors.Grey.Medium);
+                // Código
+                column.Item().AlignCenter().PaddingTop(15).Text($"Código: {data.InvitationCode}")
+                    .FontSize(10).FontColor(Colors.Grey.Medium);
             });
         }
 
@@ -270,41 +244,41 @@ namespace WeddingInvitations.Api.Services
         {
             container.AlignCenter().Column(column =>
             {
-                column.Item().Text("ITINERARIO")
-                    .FontSize(12).FontColor(WeddingEventInfo.PrimaryColorHex).LetterSpacing(2).Light();
+                column.Item().AlignCenter().Text("ITINERARIO")
+                    .FontSize(12).FontColor(WeddingEventInfo.PrimaryColorHex);
 
-                column.Item().PaddingTop(12).Width(300).Height(1).Background(Colors.Grey.Lighten2);
+                column.Item().AlignCenter().PaddingTop(10).Width(260).Height(1).Background(Colors.Grey.Lighten2);
 
                 foreach (var evt in WeddingEventInfo.Events)
                 {
-                    column.Item().PaddingTop(15).Column(eventColumn =>
+                    column.Item().AlignCenter().PaddingTop(15).Column(eventColumn =>
                     {
-                        // Nombre del evento
-                        eventColumn.Item().Text(evt.Name.ToUpper())
-                            .FontSize(12).FontColor(WeddingEventInfo.PrimaryColorHex).LetterSpacing(1).SemiBold();
+                        // Nombre del evento - CENTRADO
+                        eventColumn.Item().AlignCenter().Text(evt.Name.ToUpper())
+                            .FontSize(12).FontColor(WeddingEventInfo.PrimaryColorHex).Bold();
 
-                        // Hora
-                        eventColumn.Item().PaddingTop(4).Text(evt.Time)
-                            .FontSize(14).FontColor(Colors.Black).Bold();
+                        // Hora - CENTRADO
+                        eventColumn.Item().AlignCenter().PaddingTop(6).Text(evt.Time)
+                            .FontSize(18).FontColor(Colors.Black).Bold();
 
-                        // Venue
-                        eventColumn.Item().PaddingTop(3).Text(evt.Venue)
-                            .FontSize(11).FontColor(Colors.Black);
+                        // Venue - CENTRADO
+                        eventColumn.Item().AlignCenter().PaddingTop(4).Text(evt.Venue)
+                            .FontSize(13).FontColor(Colors.Black);
 
-                        // Dirección
-                        eventColumn.Item().PaddingTop(2).Text(evt.Address)
-                            .FontSize(9).FontColor(Colors.Grey.Darken1);
+                        // Dirección - CENTRADO
+                        eventColumn.Item().AlignCenter().PaddingTop(3).PaddingHorizontal(20).Text(evt.Address)
+                            .FontSize(11).FontColor(Colors.Grey.Darken1);
 
-                        // Link de Maps (más discreto)
-                        eventColumn.Item().PaddingTop(6).Hyperlink(evt.MapUrl)
-                            .Text("Ver ubicacion")
-                            .FontSize(9).FontColor(WeddingEventInfo.SecondaryColorHex).Underline();
+                        // Link - CENTRADO
+                        eventColumn.Item().AlignCenter().PaddingTop(8).Hyperlink(evt.MapUrl)
+                            .Text("Ver ubicación")
+                            .FontSize(11).FontColor(WeddingEventInfo.SecondaryColorHex).Underline();
                     });
 
-                    // Separador entre eventos (excepto el último)
+                    // Separador
                     if (evt != WeddingEventInfo.Events.Last())
                     {
-                        column.Item().PaddingTop(12).Width(200).Height(1).Background(Colors.Grey.Lighten3);
+                        column.Item().AlignCenter().PaddingTop(15).Width(190).Height(1).Background(Colors.Grey.Lighten3);
                     }
                 }
             });
@@ -314,22 +288,23 @@ namespace WeddingInvitations.Api.Services
         {
             container.AlignCenter().Column(column =>
             {
-                column.Item().Text("INVITADOS CONFIRMADOS")
-                    .FontSize(12).FontColor(WeddingEventInfo.PrimaryColorHex).LetterSpacing(2).Light();
+                column.Item().AlignCenter().Text("INVITADOS CONFIRMADOS")
+                    .FontSize(12).FontColor(WeddingEventInfo.PrimaryColorHex);
 
-                column.Item().PaddingTop(12).Width(300).Height(1).Background(Colors.Grey.Lighten2);
+                column.Item().AlignCenter().PaddingTop(10).Width(260).Height(1).Background(Colors.Grey.Lighten2);
 
-                column.Item().PaddingTop(12).Column(guestColumn =>
+                column.Item().AlignCenter().PaddingTop(12).Column(guestColumn =>
                 {
                     foreach (var guest in data.Guests)
                     {
-                        guestColumn.Item().PaddingTop(6).Text(text =>
+                        guestColumn.Item().AlignCenter().PaddingTop(5).Text(text =>
                         {
-                            text.Span(guest.Name).FontSize(11).FontColor(Colors.Black);
+                            text.AlignCenter();
+                            text.Span(guest.Name).FontSize(14).FontColor(Colors.Black);
 
                             if (guest.IsChild)
                             {
-                                text.Span(" (niño/a)").FontSize(9).FontColor(Colors.Grey.Medium).Italic();
+                                text.Span(" (niño/a)").FontSize(11).FontColor(Colors.Grey.Medium).Italic();
                             }
                         });
                     }
@@ -341,34 +316,35 @@ namespace WeddingInvitations.Api.Services
         {
             container.AlignCenter().Column(column =>
             {
-                column.Item().Text("CODIGO DE VESTIMENTA")
-                    .FontSize(12).FontColor(WeddingEventInfo.PrimaryColorHex).LetterSpacing(2).Light();
+                column.Item().AlignCenter().Text("CÓDIGO DE VESTIMENTA")
+                    .FontSize(12).FontColor(WeddingEventInfo.PrimaryColorHex);
 
-                column.Item().PaddingTop(8).Text(WeddingEventInfo.DressCode)
-                    .FontSize(16).FontColor(WeddingEventInfo.SecondaryColorHex).Bold();
+                column.Item().AlignCenter().PaddingTop(10).Text(WeddingEventInfo.DressCode)
+                    .FontSize(20).FontColor(WeddingEventInfo.SecondaryColorHex).Bold();
 
-                column.Item().PaddingTop(6).Text(WeddingEventInfo.DressCodeDescription)
-                    .FontSize(9).FontColor(Colors.Grey.Darken1);
+                column.Item().AlignCenter().PaddingTop(8).PaddingHorizontal(30).Text(WeddingEventInfo.DressCodeDescription)
+                    .FontSize(11).FontColor(Colors.Grey.Darken1);
 
-                // Restricciones en línea
-                column.Item().PaddingTop(8).Text(text =>
+                // Restricciones - CENTRADO
+                column.Item().AlignCenter().PaddingTop(10).PaddingHorizontal(30).Text(text =>
                 {
-                    text.Span("Evita: ").FontSize(9).FontColor(Colors.Grey.Darken2).SemiBold();
+                    text.AlignCenter();
+                    text.Span("Evita: ").FontSize(11).FontColor(Colors.Grey.Darken2).SemiBold();
                     text.Span(string.Join(" • ", WeddingEventInfo.DressCodeRestrictions))
-                        .FontSize(9).FontColor(Colors.Grey.Darken1);
+                        .FontSize(11).FontColor(Colors.Grey.Darken1);
                 });
             });
         }
 
         private void ComposeGiftMessage(IContainer container)
         {
-            container.AlignCenter().PaddingHorizontal(40).Column(column =>
+            container.AlignCenter().PaddingHorizontal(30).Column(column =>
             {
-                column.Item().Text(WeddingEventInfo.GiftMessageTitle)
-                    .FontSize(11).FontColor(WeddingEventInfo.PrimaryColorHex).SemiBold();
+                column.Item().AlignCenter().Text(WeddingEventInfo.GiftMessageTitle)
+                    .FontSize(13).FontColor(WeddingEventInfo.PrimaryColorHex).SemiBold();
 
-                column.Item().PaddingTop(6).Text(WeddingEventInfo.GiftMessage)
-                    .FontSize(9).FontColor(Colors.Grey.Darken1).LineHeight(1.4f);
+                column.Item().AlignCenter().PaddingTop(8).Text(WeddingEventInfo.GiftMessage)
+                    .FontSize(11).FontColor(Colors.Grey.Darken1).LineHeight(1.5f);
             });
         }
 
@@ -376,10 +352,10 @@ namespace WeddingInvitations.Api.Services
         {
             container.AlignCenter().Column(column =>
             {
-                column.Item().Width(200).Height(1).Background(WeddingEventInfo.SecondaryColorHex);
+                column.Item().AlignCenter().Width(160).Height(1).Background(WeddingEventInfo.SecondaryColorHex);
 
-                column.Item().PaddingTop(12).Text(WeddingEventInfo.ClosingMessage)
-                    .FontSize(12).FontColor(WeddingEventInfo.PrimaryColorHex).Italic();
+                column.Item().AlignCenter().PaddingTop(12).Text(WeddingEventInfo.ClosingMessage)
+                    .FontSize(14).FontColor(WeddingEventInfo.PrimaryColorHex).Italic();
             });
         }
     }
