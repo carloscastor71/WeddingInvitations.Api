@@ -1,6 +1,7 @@
 using Microsoft.EntityFrameworkCore;
 using WeddingInvitations.Api.Data;
 using WeddingInvitations.Api.Services;
+QuestPDF.Settings.License = QuestPDF.Infrastructure.LicenseType.Community;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -20,6 +21,16 @@ builder.Services.AddDbContext<WeddingDbContext>(options =>
     options.UseNpgsql(builder.Configuration.GetConnectionString("DefaultConnection")));
 
 builder.Services.AddScoped<ExcelExportService>();
+
+// Servicios para generación de PDFs
+builder.Services.AddScoped<PdfInvitationService>();
+builder.Services.AddScoped<TempFileManager>();
+
+// Configurar licencia de QuestPDF (Community - gratuita)
+QuestPDF.Settings.License = QuestPDF.Infrastructure.LicenseType.Community;
+
+// Habilitar archivos estáticos (para servir PDFs desde wwwroot)
+builder.Services.AddDirectoryBrowser();
 
 // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
 builder.Services.AddEndpointsApiExplorer();
@@ -48,5 +59,8 @@ app.UseHttpsRedirection();
 app.UseCors("AllowAll");
 app.UseAuthorization();
 app.MapControllers();
+
+// Servir archivos estáticos (PDFs)
+app.UseStaticFiles();
 
 app.Run();
