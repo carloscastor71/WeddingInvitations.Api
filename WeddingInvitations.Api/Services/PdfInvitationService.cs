@@ -297,7 +297,7 @@ namespace WeddingInvitations.Api.Services
 
                 foreach (var evt in WeddingEventInfo.Events)
                 {
-                    column.Item().PaddingTop(15).Padding(10).Border(1).BorderColor(Colors.Grey.Lighten2).Column(eventColumn =>
+                    column.Item().AlignCenter().PaddingTop(15).Padding(10).Border(1).BorderColor(Colors.Grey.Lighten2).Column(eventColumn =>
                     {
                         // Icono y nombre del evento
                         eventColumn.Item().AlignCenter().Row(row =>
@@ -375,13 +375,13 @@ namespace WeddingInvitations.Api.Services
                 column.Item().AlignCenter().Text("INVITADOS CONFIRMADOS")
                     .FontSize(14).FontColor(WeddingEventInfo.PrimaryColorHex).Bold();
 
-                column.Item().PaddingTop(5).LineHorizontal(1).LineColor(Colors.Grey.Lighten2);
+                column.Item().AlignCenter().PaddingTop(5).LineHorizontal(1).LineColor(Colors.Grey.Lighten2);
 
                 foreach (var guest in data.Guests)
                 {
                     column.Item().AlignCenter().PaddingTop(5).Row(row =>
                     {
-                        row.RelativeItem().Text(text =>
+                        row.RelativeItem().AlignCenter().Text(text =>
                         {
                             text.Span("✓ ").FontSize(12).FontColor(WeddingEventInfo.SecondaryColorHex);
                             text.Span(guest.Name).FontSize(11).FontColor(Colors.Black);
