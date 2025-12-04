@@ -325,14 +325,15 @@ namespace WeddingInvitations.Api.Services
                 column.Item().AlignCenter().PaddingTop(8).PaddingHorizontal(30).Text(WeddingEventInfo.DressCodeDescription)
                     .FontSize(11).FontColor(Colors.Grey.Darken1);
 
-                // Restricciones - CENTRADO
-                column.Item().AlignCenter().PaddingTop(10).PaddingHorizontal(30).Text(text =>
+                // Restricciones - CENTRADO (uno por línea con bullets)
+                column.Item().AlignCenter().PaddingTop(10).Text("Evita:")
+                    .FontSize(11).FontColor(Colors.Grey.Darken2).SemiBold();
+
+                foreach (var restriction in WeddingEventInfo.DressCodeRestrictions)
                 {
-                    text.AlignCenter();
-                    text.Span("Evita: ").FontSize(11).FontColor(Colors.Grey.Darken2).SemiBold();
-                    text.Span(string.Join(" • ", WeddingEventInfo.DressCodeRestrictions))
+                    column.Item().AlignCenter().PaddingTop(3).PaddingHorizontal(30).Text($"• {restriction}")
                         .FontSize(11).FontColor(Colors.Grey.Darken1);
-                });
+                }
             });
         }
 
