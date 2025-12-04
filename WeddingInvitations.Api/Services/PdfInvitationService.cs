@@ -206,21 +206,39 @@ namespace WeddingInvitations.Api.Services
         /// </summary>
         private void ComposeHeader(IContainer container)
         {
-            var imagePath = Path.Combine(_environment.WebRootPath, "images", "roses-intro.webp");
-
             container.Column(column =>
             {
-                // Verificar si existe la imagen
-                if (File.Exists(imagePath))
+                // Intentar cargar imagen solo si WebRootPath existe
+                if (!string.IsNullOrEmpty(_environment.WebRootPath))
                 {
-                    column.Item().Height(100).Image(imagePath);
+                    var imagePath = Path.Combine(_environment.WebRootPath, "images", "roses-intro.webp");
+
+                    if (File.Exists(imagePath))
+                    {
+                        try
+                        {
+                            column.Item().Height(100).Image(imagePath);
+                        }
+                        catch (Exception ex)
+                        {
+                            _logger.LogWarning($"⚠️  No se pudo cargar imagen: {ex.Message}");
+                            // Continuar sin imagen
+                        }
+                    }
+                    else
+                    {
+                        _logger.LogWarning($"⚠️  Imagen no encontrada en: {imagePath}");
+                    }
+                }
+                else
+                {
+                    _logger.LogWarning("⚠️  WebRootPath es null, generando PDF sin imagen");
                 }
 
-                // Línea decorativa
+                // Línea decorativa (siempre se muestra)
                 column.Item().PaddingTop(10).LineHorizontal(2).LineColor(WeddingEventInfo.PrimaryColorHex);
             });
         }
-
         /// <summary>
         /// SECCIÓN 2: Título con nombres de los novios
         /// </summary>
