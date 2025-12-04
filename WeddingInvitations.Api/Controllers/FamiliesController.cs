@@ -280,5 +280,182 @@ namespace WeddingInvitations.Api.Controllers
         {
             return _context.Families.Any(e => e.Id == id);
         }
+
+        // ===== ⭐ NUEVO ENDPOINT: GENERAR PASES =====
+
+        /// <summary>
+        /// Genera TODOS los pases de invitado para una familia
+        /// Elimina pases anteriores, genera nuevos PDFs, los guarda en BD
+        /// y retorna URLs + mensaje para WhatsApp
+        /// </summary>
+        /// <param name="id">ID de la familia</param>
+        /// <param name="pdfService">Servicio de generación de PDFs</param>
+        /// <param name="tempFileManager">Gestor de archivos temporales</param>
+        /// <returns>URLs de los PDFs y mensaje de WhatsApp</returns>
+        [HttpGet("{id}/generate-passes")]
+        public async Task<IActionResult> GeneratePasses(
+            int id,
+            [FromServices] PdfInvitationService pdfService,
+            [FromServices] TempFileManager tempFileManager)
+        {
+            try
+            {
+                // 1. Verificar que la familia existe
+                var family = await _context.Families
+                    .Include(f => f.Guests)
+                    .FirstOrDefaultAsync(f => f.Id == id);
+
+                if (family == null)
+                {
+                    return NotFound(new { message = "Familia no encontrada" });
+                }
+
+                // 2. Eliminar pases anteriores de esta familia (si existen)
+                var deletedCount = await tempFileManager.DeleteFamilyPasses(id);
+                if (deletedCount > 0)
+                {
+                    Console.WriteLine($"🗑️  {deletedCount} pase(s) anterior(es) eliminado(s)");
+                }
+
+                // 3. Generar todos los pases nuevos (uno por mesa)
+                var generatedPasses = await pdfService.GenerateAllPassesForFamily(id);
+
+                if (!generatedPasses.Any())
+                {
+                    return BadRequest(new { message = "No se pudo generar ningún pase" });
+                }
+
+                // 4. Guardar cada PDF en la base de datos y obtener URLs
+                var baseUrl = $"{Request.Scheme}://{Request.Host}";
+                var passesInfo = new List<object>();
+
+                foreach (var pass in generatedPasses)
+                {
+                    // Guardar en BD
+                    var fileName = await tempFileManager.SavePdf(
+                        pass.PdfData,
+                        pass.FamilyId,
+                        pass.TableId,
+                        family.InvitationCode,
+                        pass.FamilyName
+                    );
+
+                    // Generar URL pública
+                    var publicUrl = tempFileManager.GetPublicUrl(fileName, baseUrl);
+
+                    passesInfo.Add(new
+                    {
+                        tableNumber = pass.TableNumber,
+                        tableName = pass.TableName,
+                        guestCount = pass.GuestCount,
+                        fileName = fileName,
+                        url = publicUrl,
+                        sizeKB = pass.SizeInBytes / 1024
+                    });
+                }
+
+                // 5. Generar mensaje de WhatsApp
+                var whatsappMessage = GenerateWhatsAppMessage(family, passesInfo);
+
+                // 6. Generar URL de WhatsApp
+                var whatsappUrl = GenerateWhatsAppUrl(family.Phone, whatsappMessage);
+
+                // 7. Retornar respuesta completa
+                return Ok(new
+                {
+                    success = true,
+                    familyName = family.CorrectedFamilyName ?? family.FamilyName,
+                    passesCount = passesInfo.Count,
+                    passes = passesInfo,
+                    whatsappMessage = whatsappMessage,
+                    whatsappUrl = whatsappUrl
+                });
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"❌ Error al generar pases: {ex.Message}");
+                return StatusCode(500, new
+                {
+                    success = false,
+                    message = "Error al generar pases",
+                    error = ex.Message
+                });
+            }
+        }
+
+        // ===== MÉTODOS AUXILIARES =====
+
+        /// <summary>
+        /// Genera el mensaje de WhatsApp con todos los links de pases
+        /// </summary>
+        private string GenerateWhatsAppMessage(Family family, List<object> passes)
+        {
+            var familyName = !string.IsNullOrWhiteSpace(family.CorrectedFamilyName)
+                ? family.CorrectedFamilyName
+                : family.FamilyName;
+
+            var message = $"¡Hola {familyName}! 👋\n\n";
+            message += "Les compartimos su(s) pase(s) de invitado para nuestra boda del 20 de diciembre.\n\n";
+
+            if (passes.Count == 1)
+            {
+                // Un solo pase
+                dynamic pass = passes[0];
+                message += $"📄 Su pase de invitado:\n";
+                message += $"{pass.url}\n\n";
+
+                if (pass.tableNumber != null)
+                {
+                    message += $"Mesa asignada: #{pass.tableNumber} - {pass.tableName}\n";
+                    message += $"({pass.guestCount} invitado(s))\n\n";
+                }
+            }
+            else
+            {
+                // Múltiples pases
+                message += "📄 Sus pases de invitado:\n\n";
+
+                foreach (dynamic pass in passes)
+                {
+                    if (pass.tableNumber != null)
+                    {
+                        message += $"Mesa #{pass.tableNumber} - {pass.tableName}\n";
+                        message += $"({pass.guestCount} invitado(s))\n";
+                        message += $"{pass.url}\n\n";
+                    }
+                    else
+                    {
+                        message += $"Pase (sin mesa asignada):\n";
+                        message += $"{pass.url}\n\n";
+                    }
+                }
+            }
+
+            message += "Por favor compártanlo(s) con sus acompañantes.\n\n";
+            message += "¡Los esperamos! 💒\n";
+            message += "Karen & Carlos";
+
+            return message;
+        }
+
+        /// <summary>
+        /// Genera la URL de WhatsApp para abrir directamente con el mensaje
+        /// </summary>
+        private string GenerateWhatsAppUrl(string phone, string message)
+        {
+            // Limpiar teléfono (remover espacios, guiones, etc.)
+            var cleanPhone = new string(phone.Where(char.IsDigit).ToArray());
+
+            // Asegurar que tenga código de país
+            if (!cleanPhone.StartsWith("52") && cleanPhone.Length == 10)
+            {
+                cleanPhone = "52" + cleanPhone; // México por defecto
+            }
+
+            // Encodear mensaje para URL
+            var encodedMessage = Uri.EscapeDataString(message);
+
+            return $"https://wa.me/{cleanPhone}?text={encodedMessage}";
+        }
     }
 }
