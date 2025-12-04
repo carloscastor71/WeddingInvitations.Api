@@ -302,7 +302,7 @@ namespace WeddingInvitations.Api.Services
                         // Icono y nombre del evento
                         eventColumn.Item().AlignCenter().Row(row =>
                         {
-                            row.RelativeItem().Text(text =>
+                            row.RelativeItem().AlignCenter().Text(text =>
                             {
                                 text.Span($"{evt.Icon} ").FontSize(18);
                                 text.Span(evt.Name).FontSize(14).FontColor(WeddingEventInfo.PrimaryColorHex).Bold();
