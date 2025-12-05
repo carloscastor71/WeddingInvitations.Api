@@ -88,11 +88,9 @@ namespace WeddingInvitations.Api.Controllers
                 return NotFound(new { message = "Invitación no encontrada" });
             }
 
-            // Verificar deadline
-            if (DateTime.UtcNow > family.ResponseDeadline)
-            {
-                return BadRequest(new { message = "El plazo para responder ha expirado" });
-            }
+            // ✅ DEADLINE ELIMINADO
+            // La fecha límite se muestra en mensajes solo para crear urgencia,
+            // pero técnicamente el sistema permite respuestas en cualquier momento
 
             // Actualizar respuesta
             family.Responded = true;
