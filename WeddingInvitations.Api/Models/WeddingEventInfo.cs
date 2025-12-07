@@ -61,7 +61,7 @@ namespace WeddingInvitations.Api.Models
         public static string GiftMessageTitle => "Un Detalle de Amor";
         public static string GiftMessage =>
             "Tu presencia es el regalo más valioso que podemos recibir.\n" +
-            "Si deseas tener un detalle adicional, habrá un buzón en la recepción. 💌";
+            "Si deseas tener un detalle adicional, habrá un buzón en la recepción. ";
 
         // ===== MENSAJE FINAL =====
         public static string ClosingMessage => "Con todo nuestro amor, Karen & Carlos";

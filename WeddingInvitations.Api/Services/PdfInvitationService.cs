@@ -207,9 +207,7 @@ namespace WeddingInvitations.Api.Services
 
                 column.Item().AlignCenter().PaddingTop(10).Width(260).Height(1).Background(Colors.Grey.Lighten2);
 
-                // Nombre de familia
-                column.Item().AlignCenter().PaddingTop(12).Text(data.FamilyName)
-                    .FontSize(26).FontColor(Colors.Black).Bold();
+               
 
                 // Mesa
                 if (data.TableNumber.HasValue)
@@ -221,11 +219,7 @@ namespace WeddingInvitations.Api.Services
                             inner.Item().AlignCenter().Text($"MESA {data.TableNumber}")
                                 .FontSize(24).FontColor(WeddingEventInfo.SecondaryColorHex).Bold();
 
-                            if (!string.IsNullOrEmpty(data.TableName))
-                            {
-                                inner.Item().AlignCenter().PaddingTop(5).Text(data.TableName)
-                                    .FontSize(13).FontColor(Colors.Grey.Darken1);
-                            }
+                           
                         });
                 }
                 else
@@ -234,9 +228,7 @@ namespace WeddingInvitations.Api.Services
                         .FontSize(12).FontColor(Colors.Grey.Darken1).Italic();
                 }
 
-                // Código
-                column.Item().AlignCenter().PaddingTop(15).Text($"Código: {data.InvitationCode}")
-                    .FontSize(10).FontColor(Colors.Grey.Medium);
+               
             });
         }
 
