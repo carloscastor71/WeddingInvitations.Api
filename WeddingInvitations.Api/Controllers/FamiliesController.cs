@@ -358,7 +358,11 @@ namespace WeddingInvitations.Api.Controllers
                 var whatsappMessage = GenerateWhatsAppMessage(family, passesInfo);
 
                 // 6. Generar URL de WhatsApp
-                var whatsappUrl = GenerateWhatsAppUrl(family.Phone, whatsappMessage);
+                var whatsappUrl = GenerateWhatsAppUrl(
+                                                        family.Phone,
+                                                        whatsappMessage,
+                                                        family.Country ?? "MX"
+                                                    );
 
                 // 7. Retornar respuesta completa
                 return Ok(new
@@ -440,16 +444,65 @@ namespace WeddingInvitations.Api.Controllers
 
         /// <summary>
         /// Genera la URL de WhatsApp para abrir directamente con el mensaje
+        /// Maneja diferentes códigos de país automáticamente
         /// </summary>
-        private string GenerateWhatsAppUrl(string phone, string message)
+        private string GenerateWhatsAppUrl(string phone, string message, string countryCode = "MX")
         {
-            // Limpiar teléfono (remover espacios, guiones, etc.)
+            // Limpiar teléfono (remover espacios, guiones, paréntesis, etc.)
             var cleanPhone = new string(phone.Where(char.IsDigit).ToArray());
 
-            // Asegurar que tenga código de país
-            if (!cleanPhone.StartsWith("52") && cleanPhone.Length == 10)
+            // Mapeo de códigos de país a códigos de marcación
+            var countryDialCodes = new Dictionary<string, string>
+    {
+        { "MX", "52" },  // México
+        { "US", "1" },   // Estados Unidos
+        { "CA", "1" },   // Canadá
+        { "ES", "34" },  // España
+        { "CO", "57" },  // Colombia
+        { "AR", "54" },  // Argentina
+        { "CL", "56" },  // Chile
+        { "PE", "51" },  // Perú
+        { "BR", "55" },  // Brasil
+        { "VE", "58" },  // Venezuela
+        // Agrega más países según necesites
+    };
+
+            // Obtener el código de marcación del país (por defecto México)
+            var dialCode = countryDialCodes.ContainsKey(countryCode.ToUpper())
+                ? countryDialCodes[countryCode.ToUpper()]
+                : "52";
+
+            // Detectar si el número ya tiene código de país
+            bool hasCountryCode = false;
+
+            // Verificar si ya tiene algún código de país conocido al inicio
+            foreach (var code in countryDialCodes.Values.Distinct())
             {
-                cleanPhone = "52" + cleanPhone; // México por defecto
+                if (cleanPhone.StartsWith(code))
+                {
+                    hasCountryCode = true;
+                    break;
+                }
+            }
+
+            // Si NO tiene código de país, agregarlo según el país
+            if (!hasCountryCode)
+            {
+                // Para US/CA: si tiene 10 dígitos, agregar código 1
+                if ((countryCode.ToUpper() == "US" || countryCode.ToUpper() == "CA") && cleanPhone.Length == 10)
+                {
+                    cleanPhone = dialCode + cleanPhone;
+                }
+                // Para México: si tiene 10 dígitos, agregar código 52
+                else if (countryCode.ToUpper() == "MX" && cleanPhone.Length == 10)
+                {
+                    cleanPhone = dialCode + cleanPhone;
+                }
+                // Para otros países con longitud típica de número local
+                else if (cleanPhone.Length >= 9 && cleanPhone.Length <= 11)
+                {
+                    cleanPhone = dialCode + cleanPhone;
+                }
             }
 
             // Encodear mensaje para URL
