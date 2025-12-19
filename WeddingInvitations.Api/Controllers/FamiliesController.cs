@@ -406,7 +406,7 @@ namespace WeddingInvitations.Api.Controllers
 
                 if (pass.tableNumber != null)
                 {
-                    message += $"Mesa asignada: #{pass.tableNumber} - {pass.tableName}\n";
+                    message += $"Mesa asignada: #{pass.tableNumber} \n";
                     message += $"({pass.guestCount} invitado(s))\n\n";
                 }
             }
