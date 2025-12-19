@@ -423,7 +423,7 @@ namespace WeddingInvitations.Api.Controllers
                 {
                     if (pass.tableNumber != null)
                     {
-                        message += $"Mesa #{pass.tableNumber} - {pass.tableName}\n";
+                        message += $"Mesa #{pass.tableNumber}\n";
                         message += $"({pass.guestCount} invitado(s))\n";
                         message += $"{pass.url}\n\n";
                     }
